@@ -479,6 +479,18 @@ input:focus, select:focus { outline: none; border-color: var(--purple); }
 .swipe-emoji { font-size: 76px; line-height: 1; }
 .swipe-text  { font-size: 18px; font-weight: 800; line-height: 1.6; }
 
+/* 이모지 대신 넣는 실제 사진 */
+.big-pic {
+  height: 150px; width: auto; max-width: 100%;
+  object-fit: contain; display: block;
+}
+.word-pic {
+  height: 110px; width: auto; max-width: 100%;
+  object-fit: contain; display: block;
+  margin: 10px auto 4px;
+  background: #fff; border-radius: var(--r-s);
+}
+
 #swipe-feedback:not(:empty) { margin-top: 14px; }
 
 /* 판정 결과 */

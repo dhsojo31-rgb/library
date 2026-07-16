@@ -51,6 +51,15 @@ function speak(text) {
   speechSynthesis.speak(u);
 }
 
+/* 큰 그림 자리 — data.js 에 img 가 있으면 사진, 없으면 이모지를 보여줘요.
+   사진을 못 불러오면(파일이 없거나 오타) 자동으로 이모지로 돌아갑니다.
+   그래서 사진이 없어도 앱이 절대 깨지지 않아요. */
+function bigPic(item) {
+  if (!item.img) return `<span class="swipe-emoji">${item.emoji}</span>`;
+  return `<img class="big-pic" src="${esc(item.img)}" alt=""
+            onerror="this.outerHTML='<span class=\\'swipe-emoji\\'>${item.emoji}</span>'">`;
+}
+
 /* 순서 섞기 (퀴즈·카드용) */
 function shuffle(arr) {
   const a = arr.slice();
@@ -477,6 +486,8 @@ $('#dict-body').addEventListener('click', e => {
   $('#dict-feedback').innerHTML = `
     <div class="feedback good">
       <strong>⭕ 정답! ${cur.emoji} ${esc(cur.word)}</strong>
+      ${cur.img ? `<img class="word-pic" src="${esc(cur.img)}" alt=""
+                     onerror="this.remove()">` : ''}
       <p>${cur.meaning}</p>
       ${cur.tip ? `<p class="match-tip">💡 ${esc(cur.tip)}</p>` : ''}
       <button class="btn btn-primary btn-lg" id="match-next">
@@ -550,7 +561,7 @@ function paintSwipe() {
   $('#swipe-body').innerHTML = `
     <div class="swipe-wrap">
       <div class="swipe-card">
-        <span class="swipe-emoji">${c.emoji}</span>
+        ${bigPic(c)}
         <p class="swipe-text">${esc(c.situation)}</p>
       </div>
       <div id="swipe-feedback"></div>

@@ -8,7 +8,7 @@
       (안 그러면 "오프라인에서만 안 되는" 이상한 증상이 생겨요)
    ============================================================ */
 
-const CACHE = 'library-explorer-v1';   // 내용을 크게 바꿨으면 v2, v3... 으로 올리세요
+const CACHE = 'library-explorer-v2';   // 내용을 크게 바꿨으면 v3, v4... 으로 올리세요
 
 const FILES = [
   './',
@@ -20,7 +20,8 @@ const FILES = [
   './app.js',
   './manifest.json',
   './icons/icon-192.png',
-  './icons/icon-512.png'
+  './icons/icon-512.png',
+  './images/bookcart.png'
 ];
 
 /* 설치: 파일들을 폰에 저장 */
@@ -43,27 +44,40 @@ self.addEventListener('activate', e => {
   );
 });
 
-/* 요청 가로채기 — "일단 저장된 걸 보여주고, 몰래 새 걸 받아두기" 방식
-   (stale-while-revalidate)
+/* 요청 가로채기 — "인터넷을 먼저 보고, 안 되면 저장된 걸 쓰기" 방식
+   (network-first, 2초 안에 응답 없으면 캐시)
 
-   이 방식을 고른 이유: 화면은 항상 즉시 뜨면서(오프라인 OK),
-   data.js 를 고치면 다음번에 열 때 반영됩니다.
-   순수 캐시 방식이면 파일을 고쳐도 영영 옛날 게 나와서 초보자가 크게 헤매요. */
+   ⚠️ 예전에는 "저장된 걸 먼저 보여주기(stale-while-revalidate)" 였는데
+      내용을 고쳐도 새로고침 한 번으로는 반영되지 않아서
+      "왜 안 바뀌지?" 하고 헤매게 만들었습니다. 그래서 바꿨어요.
+
+   지금 방식이면:
+     - 인터넷이 되면  → 항상 최신 내용 (data.js 고치면 새로고침 한 번에 반영)
+     - 인터넷이 안 되면 → 2초 뒤 저장된 내용 (서가 구석에서도 열림)             */
+const TIMEOUT = 2000;
+
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   if (!e.request.url.startsWith(self.location.origin)) return;   // 외부 요청은 그대로
 
-  e.respondWith(
-    caches.match(e.request).then(cached => {
-      const fresh = fetch(e.request).then(res => {
-        if (res && res.status === 200) {
-          const copy = res.clone();
-          caches.open(CACHE).then(c => c.put(e.request, copy));
-        }
-        return res;
-      }).catch(() => cached);       // 오프라인이면 저장된 걸로
+  e.respondWith((async () => {
+    const cached = await caches.match(e.request);
 
-      return cached || fresh;       // 저장된 게 있으면 즉시, 없으면 받아서
-    })
-  );
+    try {
+      // 인터넷에서 받아오기 (단, 2초까지만 기다림)
+      const res = await Promise.race([
+        fetch(e.request),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('느림')), TIMEOUT))
+      ]);
+      if (res && res.status === 200) {
+        const copy = res.clone();
+        caches.open(CACHE).then(c => c.put(e.request, copy));   // 다음 오프라인을 위해 저장
+      }
+      return res;
+    } catch (err) {
+      // 인터넷이 없거나 너무 느리면 저장해둔 걸로
+      if (cached) return cached;
+      throw err;
+    }
+  })());
 });
