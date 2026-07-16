@@ -113,6 +113,25 @@ const GUIDES = {
         }
       },
       {
+        icon: '📚', heading: '총 몇 권의 책을 대출할 수 있나요?',
+        body: '한 번에 빌릴 수 있는 책이 몇 권일까요?',
+        quiz: {
+          /* 보기와 정답 모두 맨 위 LOAN_RULE.maxBooks 를 기준으로 만들어요.
+             대출 권수를 바꾸면 이 문제도 자동으로 따라갑니다.
+             (maxBooks 가 2 이상일 때를 기준으로 합니다)                  */
+          choices: [
+            `${LOAN_RULE.maxBooks - 1}권`,
+            `${LOAN_RULE.maxBooks}권`,        // ← 정답
+            `${LOAN_RULE.maxBooks + 1}권`,
+            `${LOAN_RULE.maxBooks + 3}권`
+          ],
+          answer: 1,
+          hint: '욕심내서 많이 빌리면 다 못 읽겠죠? 생각보다 적은 수예요.',
+          explain: `한 번에 ${LOAN_RULE.maxBooks}권까지 빌릴 수 있고, ` +
+                   `${LOAN_RULE.days}일 동안 볼 수 있어요.`
+        }
+      },
+      {
         icon: SCHOOL.librarianEmoji, heading: '선생님을 부를 때는 뭐라고 부르나요?',
         body: '도서관에서 책을 관리하고, 못 찾는 책을 함께 찾아주시는 분이에요.',
         quiz: {
