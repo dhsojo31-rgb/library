@@ -132,6 +132,26 @@ const GUIDES = {
         }
       },
       {
+        icon: '📅', heading: '대출 기간은 며칠일까요?',
+        body: '빌린 책을 며칠 동안 볼 수 있을까요?',
+        quiz: {
+          /* 보기와 정답 모두 맨 위 LOAN_RULE.days 를 기준으로 만들어요.
+             정답이 항상 두 번째로 짧은 자리에 오기 때문에
+             아래 hint 도 기간을 바꿔도 계속 맞습니다.                    */
+          choices: [
+            `${LOAN_RULE.days - 4}일`,
+            `${LOAN_RULE.days}일`,          // ← 정답
+            `${LOAN_RULE.days * 2}일`,
+            `${LOAN_RULE.days * 4}일`
+          ],
+          answer: 1,
+          hint: '가장 짧은 것도, 가장 긴 것도 아니에요. ' +
+                '너무 오래 갖고 있으면 그 책을 기다리는 친구가 못 읽겠죠?',
+          explain: `빌린 날부터 ${LOAN_RULE.days}일 동안 볼 수 있어요. ` +
+                   '반납일을 잊지 않게 홈 화면에서 "빌린 책 추가"를 눌러 등록해 두세요!'
+        }
+      },
+      {
         icon: SCHOOL.librarianEmoji, heading: '선생님을 부를 때는 뭐라고 부르나요?',
         body: '도서관에서 책을 관리하고, 못 찾는 책을 함께 찾아주시는 분이에요.',
         quiz: {
