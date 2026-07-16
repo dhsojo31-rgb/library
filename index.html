@@ -1,0 +1,198 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#5B4CDB">
+<title>도서관 탐험대</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="style.css">
+
+<!-- ══════════════ 온보딩: 최초 1회만 ══════════════ -->
+<section class="screen" id="screen-onboard" hidden>
+  <div class="onboard">
+    <div class="onboard-hero">📚</div>
+    <h1>도서관 탐험대</h1>
+    <p class="onboard-sub">모험을 떠나기 전에 탐험대원 등록을 해주세요!</p>
+    <form id="onboard-form" class="card">
+      <label>이름
+        <input name="name" required maxlength="10" placeholder="김도서" autocomplete="off">
+      </label>
+      <label>학년
+        <select name="grade">
+          <option value="1">1학년</option><option value="2">2학년</option>
+          <option value="3" selected>3학년</option><option value="4">4학년</option>
+          <option value="5">5학년</option><option value="6">6학년</option>
+        </select>
+      </label>
+      <label>학번 <span class="hint">학생증에 적힌 번호예요</span>
+        <input name="studentId" required maxlength="12" placeholder="30115"
+               inputmode="numeric" autocomplete="off">
+      </label>
+      <button class="btn btn-primary btn-lg" type="submit">탐험 시작하기 🚀</button>
+    </form>
+  </div>
+</section>
+
+<!-- ══════════════ 홈 대시보드 ══════════════ -->
+<section class="screen" id="screen-home" hidden>
+  <header class="topbar">
+    <div>
+      <p class="topbar-hello" id="home-hello">안녕!</p>
+      <h1 class="topbar-title">도서관 탐험대</h1>
+    </div>
+    <button class="icon-btn" id="btn-card" aria-label="모바일 학생증 열기">🎫</button>
+  </header>
+
+  <main class="scroll">
+    <!-- 진행률 -->
+    <div class="card progress-card">
+      <div class="progress-head">
+        <span>도서관 탐험 진행률</span>
+        <strong id="progress-pct">0%</strong>
+      </div>
+      <div class="bar"><div class="bar-fill" id="progress-bar"></div></div>
+      <p class="progress-note" id="progress-note">5단계를 모두 완료하고 퀴즈에 도전하세요!</p>
+    </div>
+
+    <!-- 교육 메뉴 -->
+    <h2 class="section-title">탐험 코스</h2>
+    <div class="menu-grid" id="menu-grid"></div>
+
+    <!-- 퀴즈 -->
+    <button class="quiz-cta" id="btn-quiz-cta">
+      <span class="quiz-cta-emoji">🏅</span>
+      <span class="quiz-cta-text">
+        <strong>도전! 도서관 퀴즈</strong>
+        <small id="quiz-cta-sub">5문제 중 4문제를 맞히면 수료 배지!</small>
+      </span>
+      <span class="quiz-cta-arrow">›</span>
+    </button>
+
+    <!-- 반납 D-Day -->
+    <h2 class="section-title">
+      내가 빌린 책
+      <button class="link-btn" id="btn-add-loan">+ 추가</button>
+    </h2>
+    <div id="loan-list"></div>
+
+    <!-- 공지 -->
+    <h2 class="section-title">도서관 소식</h2>
+    <div id="notice-list"></div>
+
+    <footer class="foot">
+      <button class="link-btn" id="btn-admin">🔐 사서 선생님용</button>
+    </footer>
+  </main>
+</section>
+
+<!-- ══════════════ 가이드 뷰어: F-01 / F-03 / F-05 공용 ══════════════ -->
+<section class="screen" id="screen-guide" hidden>
+  <header class="topbar">
+    <button class="icon-btn" data-back aria-label="뒤로">‹</button>
+    <h1 class="topbar-title" id="guide-title"></h1>
+    <button class="icon-btn" id="guide-tts" aria-label="읽어주기">🔊</button>
+  </header>
+  <div class="dots" id="guide-dots"></div>
+  <main class="scroll" id="guide-body"></main>
+  <nav class="stepnav">
+    <button class="btn" id="guide-prev">이전</button>
+    <button class="btn btn-primary" id="guide-next">다음</button>
+  </nav>
+</section>
+
+<!-- ══════════════ F-02 도서관 사전 ══════════════ -->
+<section class="screen" id="screen-dict" hidden>
+  <header class="topbar">
+    <button class="icon-btn" data-back aria-label="뒤로">‹</button>
+    <h1 class="topbar-title">도서관 사전</h1>
+    <button class="icon-btn" id="dict-tts" aria-label="읽어주기">🔊</button>
+  </header>
+  <p class="lead">카드를 눌러서 뒤집어 보세요! 👆</p>
+  <div class="dots" id="dict-dots"></div>
+  <main class="dict-stage" id="dict-stage"></main>
+  <nav class="stepnav">
+    <button class="btn" id="dict-prev">이전</button>
+    <button class="btn btn-primary" id="dict-next">다음</button>
+  </nav>
+</section>
+
+<!-- ══════════════ F-04 도서관 약속 (YES/NO) ══════════════ -->
+<section class="screen" id="screen-swipe" hidden>
+  <header class="topbar">
+    <button class="icon-btn" data-back aria-label="뒤로">‹</button>
+    <h1 class="topbar-title">도서관 약속</h1>
+    <span class="topbar-count" id="swipe-count"></span>
+  </header>
+  <p class="lead">올바른 행동이면 <b class="yes">YES ⭕</b>, 아니면 <b class="no">NO ❌</b>!</p>
+  <main class="swipe-stage" id="swipe-stage"></main>
+  <nav class="stepnav">
+    <button class="btn btn-no" id="btn-no">❌ NO</button>
+    <button class="btn btn-yes" id="btn-yes">⭕ YES</button>
+  </nav>
+</section>
+
+<!-- ══════════════ F-06 퀴즈 ══════════════ -->
+<section class="screen" id="screen-quiz" hidden>
+  <header class="topbar">
+    <button class="icon-btn" data-back aria-label="뒤로">‹</button>
+    <h1 class="topbar-title">도서관 퀴즈</h1>
+    <span class="topbar-count" id="quiz-count"></span>
+  </header>
+  <div class="bar bar-slim"><div class="bar-fill" id="quiz-bar"></div></div>
+  <main class="scroll" id="quiz-body"></main>
+</section>
+
+<!-- ══════════════ 보관함: 배지 + 쿠폰 ══════════════ -->
+<section class="screen" id="screen-reward" hidden>
+  <header class="topbar">
+    <button class="icon-btn" data-back aria-label="뒤로">‹</button>
+    <h1 class="topbar-title">내 보관함</h1>
+  </header>
+  <main class="scroll" id="reward-body"></main>
+</section>
+
+<!-- ══════════════ 관리자 ══════════════ -->
+<section class="screen" id="screen-admin" hidden>
+  <header class="topbar">
+    <button class="icon-btn" data-back aria-label="뒤로">‹</button>
+    <h1 class="topbar-title">사서 선생님용</h1>
+  </header>
+  <main class="scroll" id="admin-body"></main>
+</section>
+
+<!-- ══════════════ 모바일 학생증 (모달) ══════════════ -->
+<div class="modal" id="modal-card" hidden>
+  <div class="modal-box studentcard">
+    <p class="sc-school" id="sc-school"></p>
+    <h2 class="sc-name" id="sc-name"></h2>
+    <p class="sc-meta" id="sc-meta"></p>
+    <canvas id="sc-barcode" class="barcode"></canvas>
+    <p class="sc-id" id="sc-id"></p>
+    <p class="sc-tip">대출대나 자가대출기에 보여주세요</p>
+    <button class="btn btn-lg" data-close>닫기</button>
+  </div>
+</div>
+
+<!-- ══════════════ 책 추가 (모달) ══════════════ -->
+<div class="modal" id="modal-loan" hidden>
+  <form class="modal-box" id="loan-form">
+    <h2>빌린 책 추가</h2>
+    <label>책 제목
+      <input name="title" required maxlength="40" placeholder="마당을 나온 암탉" autocomplete="off">
+    </label>
+    <label>반납일
+      <input name="dueDate" type="date" required>
+    </label>
+    <div class="modal-actions">
+      <button class="btn" type="button" data-close>취소</button>
+      <button class="btn btn-primary" type="submit">추가</button>
+    </div>
+  </form>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="data.js"></script>
+<script src="storage.js"></script>
+<script src="barcode.js"></script>
+<script src="app.js"></script>
