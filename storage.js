@@ -1,14 +1,24 @@
 /* ============================================================
    storage.js — 진행률/배지/쿠폰을 브라우저에 저장하고 불러오기
    ------------------------------------------------------------
-   localStorage 는 브라우저에 있는 작은 저장 상자예요.
-   앱을 껐다 켜도, 폰을 재부팅해도 내용이 남아있어요.
-   단, 글자(문자열)만 넣을 수 있어서 JSON 으로 바꿔서 넣습니다.
+   ⭐ 공용 기기용: sessionStorage 를 씁니다.
+      - 앱을 새로 열면 → 저장된 게 없어서 이름·학년·반 등록부터 시작해요.
+        (도서관 태블릿처럼 여러 아이가 번갈아 쓰는 기기에 알맞아요)
+      - 같은 세션 안에서 새로고침 → 진행이 그대로 남아요.
+        (퀴즈 중에 실수로 새로고침해도 처음부터 다시 하지 않아요)
+      - 앱(탭)을 완전히 닫으면 → 자동으로 지워져서, 다음 아이는 깨끗한 상태로 시작해요.
+
+      ※ 만약 "각자 폰에서 진행을 계속 이어가게" 하고 싶으면
+        아래 sessionStorage 를 localStorage 로 바꾸면 됩니다. (두 군데)
    ============================================================ */
 
 /* 저장 형식이 바뀌면 뒤의 숫자를 올려요.
-   v2: 학번을 없애고 반(classNo)을 받도록 변경 — 옛 저장본은 무시하고 다시 등록받습니다. */
+   v2: 학번을 없애고 반(classNo)을 받도록 변경 */
 const SAVE_KEY = 'library_explorer_v2';
+
+/* 예전에 localStorage 에 저장해 둔 게 있으면 지워요.
+   (localStorage → sessionStorage 로 바꾸기 전에 남은 찌꺼기) */
+try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
 
 /* 처음 시작할 때의 빈 상태 */
 function emptyState() {
@@ -26,7 +36,7 @@ let state = load();
 /* ---------- 불러오기 ---------- */
 function load() {
   try {
-    const raw = localStorage.getItem(SAVE_KEY);
+    const raw = sessionStorage.getItem(SAVE_KEY);
     if (!raw) return emptyState();
     // 저장된 값과 기본값을 합쳐요.
     // (나중에 항목을 새로 추가해도 옛날 저장본이 깨지지 않게 하려고)
@@ -41,7 +51,7 @@ function load() {
 /* ---------- 저장하기 ---------- */
 function save() {
   try {
-    localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+    sessionStorage.setItem(SAVE_KEY, JSON.stringify(state));
   } catch (e) {
     console.warn('저장에 실패했습니다.', e);
   }
@@ -144,6 +154,6 @@ function todayISO(date) {
 
 /* ---------- 전체 초기화 (관리자용) ---------- */
 function resetAll() {
-  localStorage.removeItem(SAVE_KEY);
+  sessionStorage.removeItem(SAVE_KEY);
   state = emptyState();
 }
