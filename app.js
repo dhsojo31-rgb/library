@@ -518,14 +518,15 @@ $('#dict-tts').addEventListener('click', () => {
 });
 
 /* ══════════ 6) YES / NO 게임 (F-04) ══════════
-   드래그(스와이프)와 버튼 둘 다 됩니다.
-   저학년은 버튼이 더 쉬울 수 있어서 두 방법을 모두 열어뒀어요.
+   YES · NO 버튼으로만 고릅니다. (드래그는 저학년에게 어려워서 뺐어요)
+   정답을 맞혀야 다음 카드로 넘어갈 수 있습니다.
    ============================================================ */
 
 let deck = [];
 let swipeIdx = 0;
-let swipeRight = 0;
-let swipeLocked = false;    // 판정 중에 또 누르는 것 방지
+let swipeRight = 0;        // 한 번에 맞힌 개수
+let swipeSolved = false;   // 지금 카드를 맞혔는지
+let swipeFirstTry = true;  // 아직 안 틀렸는지
 
 function startSwipe() {
   showScreen('screen-swipe');
@@ -533,116 +534,100 @@ function startSwipe() {
   deck = shuffle(SWIPE_CARDS);
   swipeIdx = 0;
   swipeRight = 0;
-  swipeLocked = false;
   paintSwipe();
 }
 
 function paintSwipe() {
   if (swipeIdx >= deck.length) { finishSwipe(); return; }
 
+  swipeSolved = false;
+  swipeFirstTry = true;
+
   const c = deck[swipeIdx];
   $('#swipe-count').textContent = `${swipeIdx + 1} / ${deck.length}`;
-  $('#swipe-stage').innerHTML = `
-    <div class="swipe-card" id="swipe-card">
-      <span class="swipe-tag tag-yes">⭕ YES</span>
-      <span class="swipe-tag tag-no">❌ NO</span>
-      <span class="swipe-emoji">${c.emoji}</span>
-      <p class="swipe-text">${esc(c.situation)}</p>
-      <span class="swipe-hint">좌우로 밀거나 아래 버튼을 누르세요</span>
+  // swipe-wrap 의 margin:auto 가 카드를 화면 가운데로 올려요.
+  // (내용이 길어지면 auto 여백이 0이 되어 자연스럽게 스크롤됩니다)
+  $('#swipe-body').innerHTML = `
+    <div class="swipe-wrap">
+      <div class="swipe-card">
+        <span class="swipe-emoji">${c.emoji}</span>
+        <p class="swipe-text">${esc(c.situation)}</p>
+      </div>
+      <div id="swipe-feedback"></div>
     </div>`;
-  enableDrag($('#swipe-card'));
+
+  // YES/NO 를 다시 켜고, '다음 카드' 는 숨겨요
+  $('#btn-yes').hidden = false;
+  $('#btn-no').hidden = false;
   $('#btn-yes').disabled = false;
   $('#btn-no').disabled = false;
-}
-
-/* 카드를 손가락/마우스로 끌기 */
-function enableDrag(card) {
-  let startX = 0, dx = 0, dragging = false;
-
-  card.addEventListener('pointerdown', e => {
-    if (swipeLocked) return;
-    dragging = true;
-    startX = e.clientX;
-    card.setPointerCapture(e.pointerId);
-    card.style.transition = 'none';
-  });
-
-  card.addEventListener('pointermove', e => {
-    if (!dragging) return;
-    dx = e.clientX - startX;
-    card.style.transform = `translateX(${dx}px) rotate(${dx / 22}deg)`;
-    // 어느 쪽으로 미는지에 따라 YES/NO 도장이 진해져요
-    card.classList.toggle('lean-yes', dx > 40);
-    card.classList.toggle('lean-no', dx < -40);
-  });
-
-  const end = () => {
-    if (!dragging) return;
-    dragging = false;
-    card.style.transition = '';
-    if (Math.abs(dx) > 90) {
-      answerSwipe(dx > 0 ? 'YES' : 'NO');
-    } else {
-      card.style.transform = '';                     // 덜 밀었으면 제자리로
-      card.classList.remove('lean-yes', 'lean-no');
-    }
-    dx = 0;
-  };
-  card.addEventListener('pointerup', end);
-  card.addEventListener('pointercancel', end);
+  $('#btn-swipe-next').hidden = true;
 }
 
 function answerSwipe(choice) {
-  if (swipeLocked) return;
-  swipeLocked = true;
-  $('#btn-yes').disabled = true;
-  $('#btn-no').disabled = true;
+  if (swipeSolved) return;
 
   const c = deck[swipeIdx];
   const correct = c.answer === choice;
-  if (correct) swipeRight++;
 
-  // 카드를 고른 방향으로 날려보내기
-  const card = $('#swipe-card');
-  if (card) {
-    card.style.transform =
-      `translateX(${choice === 'YES' ? 500 : -500}px) rotate(${choice === 'YES' ? 25 : -25}deg)`;
-    card.style.opacity = '0';
+  if (!correct) {
+    // ⚠️ 틀려도 버튼을 잠그면 안 돼요. 맞혀야 넘어갈 수 있으니 잠그면 못 나갑니다.
+    swipeFirstTry = false;
+    $('#swipe-feedback').innerHTML = `
+      <div class="feedback bad">
+        <strong>🤔 다시 생각해볼까요?</strong>
+        <p>도서관에서 이렇게 하면 어떨지 그림을 한 번 더 보고 골라보세요!</p>
+      </div>`;
+    return;
   }
 
-  setTimeout(() => {
-    $('#swipe-stage').innerHTML = `
-      <div class="verdict ${correct ? 'good' : 'bad'}">
-        <span class="verdict-emoji">${correct ? '🎉' : '🤔'}</span>
-        <h2>${correct ? '정답이에요!' : '다시 생각해봐요'}</h2>
-        <p class="verdict-answer">이 행동은 <b>${c.answer}</b> 예요.</p>
-        <p class="verdict-explain">${esc(c.explain)}</p>
-        <button class="btn btn-primary btn-lg" id="verdict-next">다음 카드 →</button>
-      </div>`;
-    $('#verdict-next').addEventListener('click', () => {
-      swipeIdx++;
-      swipeLocked = false;
-      paintSwipe();
-    });
-  }, 260);
+  swipeSolved = true;
+  if (swipeFirstTry) swipeRight++;
+
+  $('#btn-yes').disabled = true;
+  $('#btn-no').disabled = true;
+
+  const last = swipeIdx === deck.length - 1;
+  $('#swipe-feedback').innerHTML = `
+    <div class="feedback good">
+      <strong>⭕ 정답! 이 행동은 ${c.answer} 예요</strong>
+      <p>${esc(c.explain)}</p>
+    </div>`;
+  $('#swipe-feedback').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  // 아래 버튼을 '다음 카드' 로 바꿔줘요
+  $('#btn-yes').hidden = true;
+  $('#btn-no').hidden = true;
+  $('#btn-swipe-next').hidden = false;
+  $('#btn-swipe-next').textContent = last ? '다 했어요! ✓' : '다음 카드 →';
+  $('#btn-swipe-next').classList.toggle('btn-done', last);
 }
 
 $('#btn-yes').addEventListener('click', () => answerSwipe('YES'));
 $('#btn-no').addEventListener('click', () => answerSwipe('NO'));
+$('#btn-swipe-next').addEventListener('click', () => {
+  swipeIdx++;
+  paintSwipe();
+});
 
 function finishSwipe() {
   const wasNew = markDone('f04');
   $('#swipe-count').textContent = '';
-  $('#swipe-stage').innerHTML = `
+  $('#btn-yes').hidden = true;
+  $('#btn-no').hidden = true;
+  $('#btn-swipe-next').hidden = true;
+  $('#swipe-body').innerHTML = `
+    <div class="swipe-wrap">
     <div class="verdict good">
       <span class="verdict-emoji">🏆</span>
       <h2>${esc(SWIPE_PAGE.short)} 끝!</h2>
-      <p class="verdict-answer">${deck.length}개 중 <b>${swipeRight}개</b> 맞혔어요.</p>
+      <p class="verdict-answer">${deck.length}개 중 <b>${swipeRight}개</b>를 한 번에 맞혔어요.</p>
       <p class="verdict-explain">${
         swipeRight === deck.length ? '완벽해요! 약속을 아주 잘 알고 있네요 👏'
-                                   : '틀린 것도 괜찮아요. 이제 알았으니까요!'}</p>
+                                   : '다시 골라서 맞힌 것도 괜찮아요. 이제 알았으니까요!'}</p>
       <button class="btn btn-primary btn-lg" id="swipe-home">홈으로</button>
       <button class="btn" id="swipe-again">한 번 더 하기</button>
+    </div>
     </div>`;
   $('#swipe-home').addEventListener('click', () => {
     go('#/home');

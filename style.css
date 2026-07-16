@@ -461,38 +461,25 @@ input:focus, select:focus { outline: none; border-color: var(--purple); }
 #dict-feedback:not(:empty) { margin-top: 14px; }
 
 /* ══════════ YES/NO 게임 (F-04) ══════════ */
-.swipe-stage { flex: 1; display: grid; place-items: center; padding: 12px 16px 16px; }
+/* 카드를 화면 가운데에 놓아요.
+   justify-content: center 대신 margin:auto 를 쓰는 이유 —
+   내용이 화면보다 길어지면 center 는 위쪽이 잘려서 못 보게 되는데,
+   margin:auto 는 여백이 0으로 줄어들며 정상적으로 스크롤됩니다. */
+#swipe-body { display: flex; flex-direction: column; }
+.swipe-wrap { margin: auto 0; width: 100%; }
 
 .swipe-card {
-  position: relative;
-  width: 100%; max-width: 340px; aspect-ratio: 3 / 3.6;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  gap: 16px; padding: 28px;
+  gap: 16px; padding: 32px 24px;
   background: #fff; border-radius: 22px;
   box-shadow: var(--shadow-l);
   text-align: center;
-  cursor: grab;
-  touch-action: pan-y;                  /* 좌우 드래그를 우리가 처리 */
-  user-select: none;
-  transition: transform .28s, opacity .28s;
 }
-.swipe-card:active { cursor: grabbing; }
 .swipe-emoji { font-size: 76px; line-height: 1; }
 .swipe-text  { font-size: 18px; font-weight: 800; line-height: 1.6; }
-.swipe-hint  { font-size: 11.5px; color: var(--ink-2); }
 
-/* 밀고 있는 방향에 나타나는 도장 */
-.swipe-tag {
-  position: absolute; top: 20px;
-  font-size: 19px; font-weight: 900;
-  padding: 7px 13px; border-radius: 10px;
-  border: 3px solid; opacity: 0; transition: opacity .15s;
-}
-.tag-yes { left: 18px;  color: var(--green); border-color: var(--green); transform: rotate(-14deg); }
-.tag-no  { right: 18px; color: var(--red);   border-color: var(--red);   transform: rotate(14deg); }
-.swipe-card.lean-yes .tag-yes { opacity: 1; }
-.swipe-card.lean-no  .tag-no  { opacity: 1; }
+#swipe-feedback:not(:empty) { margin-top: 14px; }
 
 /* 판정 결과 */
 .verdict {
