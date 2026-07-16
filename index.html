@@ -94,27 +94,22 @@
   </nav>
 </section>
 
-<!-- ══════════════ F-02 도서관 사전 ══════════════ -->
+<!-- ══════════════ F-02 도서관 용어 ══════════════ -->
 <section class="screen" id="screen-dict" hidden>
   <header class="topbar">
     <button class="icon-btn" data-back aria-label="뒤로">‹</button>
-    <h1 class="topbar-title">도서관 사전</h1>
+    <h1 class="topbar-title" id="dict-title"></h1>
     <button class="icon-btn" id="dict-tts" aria-label="읽어주기">🔊</button>
   </header>
-  <p class="lead">카드를 눌러서 뒤집어 보세요! 👆</p>
-  <div class="dots" id="dict-dots"></div>
-  <main class="dict-stage" id="dict-stage"></main>
-  <nav class="stepnav">
-    <button class="btn" id="dict-prev">이전</button>
-    <button class="btn btn-primary" id="dict-next">다음</button>
-  </nav>
+  <p class="lead">설명을 읽고 알맞은 낱말을 찾아보세요! 🔍</p>
+  <main class="scroll" id="dict-body"></main>
 </section>
 
 <!-- ══════════════ F-04 도서관 약속 (YES/NO) ══════════════ -->
 <section class="screen" id="screen-swipe" hidden>
   <header class="topbar">
     <button class="icon-btn" data-back aria-label="뒤로">‹</button>
-    <h1 class="topbar-title">도서관 약속</h1>
+    <h1 class="topbar-title" id="swipe-title"></h1>
     <span class="topbar-count" id="swipe-count"></span>
   </header>
   <p class="lead">올바른 행동이면 <b class="yes">YES ⭕</b>, 아니면 <b class="no">NO ❌</b>!</p>

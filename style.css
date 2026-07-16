@@ -307,6 +307,9 @@ input:focus, select:focus { outline: none; border-color: var(--purple); }
 /* 가이드 안의 문제 카드 */
 .step-quiz { margin-top: 20px; text-align: left; }
 #step-feedback:not(:empty) { margin-top: 12px; }
+.quiz-lock {
+  font-size: 12px; color: var(--ink-2); text-align: center; margin-top: 12px;
+}
 
 /* 정답/오답 상자 안에 표(이용 시간 등)를 넣을 때
    — 흰 카드에 올려야 상자의 초록/빨강과 표의 색이 안 부딪힙니다 */
@@ -335,6 +338,19 @@ input:focus, select:focus { outline: none; border-color: var(--purple); }
 .hour-row.closed { background: var(--red-lt); }
 .hour-when { font-weight: 800; }
 .hour-time { font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* 대출·반납 순서 목록 */
+.flow {
+  margin: 14px 0 0; padding: 14px 14px 14px 34px;
+  background: #fff; border-radius: var(--r-s);
+  text-align: left; font-size: 13.5px; line-height: 1.65;
+}
+.flow li { margin-bottom: 9px; }
+.flow li:last-child { margin-bottom: 0; }
+.flow li::marker { font-weight: 900; color: var(--purple); }
+
+/* 순서 보기는 글이 길어서 조금 작게 */
+.step-quiz .mc-btn { font-size: 13.5px; line-height: 1.5; }
 
 /* 자가대출기 */
 .kiosk { display: grid; gap: 12px; margin-top: 20px; text-align: left; }
@@ -389,46 +405,60 @@ input:focus, select:focus { outline: none; border-color: var(--purple); }
 .kdc-name  { font-weight: 800; font-size: 13.5px; min-width: 62px; }
 .kdc-ex    { font-size: 11.5px; color: var(--ink-2); }
 
-/* ══════════ 플래시카드 (F-02) ══════════ */
-.dict-stage {
-  flex: 1;
-  display: grid; place-items: center;
-  padding: 16px; perspective: 1200px;   /* 3D 로 보이게 하는 마법 */
+/* ══════════ 짝 맞추기 (F-02) ══════════ */
+.match-card { padding: 16px 18px 22px; }
+.match-progress {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 12.5px; color: var(--ink-2); margin-bottom: 7px;
 }
-.flip { width: 100%; max-width: 340px; aspect-ratio: 3 / 4; cursor: pointer; }
-.flip-inner {
-  position: relative; width: 100%; height: 100%;
-  transition: transform .55s cubic-bezier(.4, 0, .2, 1);
-  transform-style: preserve-3d;
-}
-.flip.flipped .flip-inner { transform: rotateY(180deg); }
+.match-progress b { font-size: 15px; color: var(--purple); font-weight: 900; }
+.match-card .bar { background: var(--line); }
+.match-card .bar-fill { background: var(--purple); }
 
-.flip-face {
-  position: absolute; inset: 0;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 10px; padding: 26px;
-  border-radius: 22px; text-align: center;
-  backface-visibility: hidden;          /* 뒷면이 비쳐 보이지 않게 */
-  -webkit-backface-visibility: hidden;
-  box-shadow: var(--shadow-l);
+.match-meaning {
+  font-size: 17px; font-weight: 700; line-height: 1.75;
+  text-align: center; margin-top: 18px;
 }
-.flip-front { background: linear-gradient(150deg, var(--purple), #8B7BF7); color: #fff; }
-.flip-back  { background: #fff; transform: rotateY(180deg); }
+.match-meaning b { color: var(--purple); }
 
-.flip-emoji { font-size: 74px; line-height: 1; }
-.flip-word  { font-size: 32px; font-weight: 900; }
-.flip-hint  { font-size: 12.5px; opacity: .8; margin-top: 6px; }
-.flip-back-word {
-  font-size: 20px; font-weight: 900; color: var(--purple);
-  padding-bottom: 10px; border-bottom: 3px solid var(--purple-lt);
+.match-ask {
+  text-align: center; font-size: 13.5px; font-weight: 700;
+  color: var(--ink-2); margin: 16px 0 10px;
 }
-.flip-meaning { font-size: 15.5px; line-height: 1.75; }
-.flip-meaning b { color: var(--purple); }
-.flip-tip {
-  font-size: 12.5px; line-height: 1.6; color: #92400E;
-  background: #FEF3C7; border-radius: var(--r-s); padding: 10px 12px; margin-top: 4px;
+
+/* 낱말 보기 — 손가락으로 누르기 쉽게 큼직하게 */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: var(--tap);
+  padding: 11px 15px;
+  font: inherit; font-size: 15px; font-weight: 800;
+  background: #fff; color: var(--ink);
+  border: 2.5px solid var(--line); border-radius: 999px;
+  cursor: pointer; transition: transform .08s;
 }
+.chip:active { transform: scale(.95); }
+.chip-emoji { font-size: 17px; }
+
+.chip-right {
+  border-color: var(--green); background: var(--green-lt); color: #15803D;
+}
+/* 틀리면 잠깐 흔들려요 (못 고르게 막지는 않아요) */
+.chip-wrong {
+  border-color: var(--red); background: var(--red-lt); color: #991B1B;
+  animation: shake .4s;
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+.match-tip {
+  font-size: 12.5px !important; line-height: 1.6; color: #92400E;
+  background: #FEF3C7; border-radius: var(--r-s); padding: 10px 12px;
+}
+#dict-feedback:not(:empty) { margin-top: 14px; }
 
 /* ══════════ YES/NO 게임 (F-04) ══════════ */
 .swipe-stage { flex: 1; display: grid; place-items: center; padding: 12px 16px 16px; }
@@ -539,6 +569,15 @@ input:focus, select:focus { outline: none; border-color: var(--purple); }
 .feedback.bad { background: var(--red-lt); border-color: var(--red); }
 .feedback strong { font-size: 16px; font-weight: 900; }
 .feedback p { font-size: 13.5px; line-height: 1.7; margin: 7px 0 0; }
+
+/* 틀렸을 때 정답을 알려주는 줄 */
+.answer-line {
+  background: rgba(255, 255, 255, .75);
+  border-radius: var(--r-s);
+  padding: 8px 11px;
+  font-size: 14px !important;
+}
+.answer-line b { color: var(--green); font-weight: 900; }
 
 /* 결과 */
 .result { text-align: center; padding: 30px 20px; }

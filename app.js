@@ -6,7 +6,7 @@
      2) 라우터           — 주소(#/home)에 따라 화면 바꾸기
      3) 홈 대시보드
      4) 가이드 뷰어      — F-01 / F-03 / F-05 를 이거 하나로! ⭐
-     5) 도서관 사전      — F-02
+     5) 도서관 용어      — F-02
      6) YES/NO 게임      — F-04
      7) 퀴즈             — F-06
      8) 보관함 (배지/쿠폰)
@@ -64,15 +64,17 @@ function shuffle(arr) {
 /* ══════════ 2) 라우터 ══════════ */
 
 /* 탐험 코스 목록 — 홈 화면 메뉴이자 라우팅 정보 */
+/* 제목·아이콘·설명은 전부 data.js 에서 가져옵니다.
+   이름을 바꾸고 싶으면 data.js 만 고치면 돼요. */
 const MENU = [
   { key: 'f01', route: '#/guide/f01', emoji: GUIDES.f01.emoji,
     title: GUIDES.f01.title, sub: GUIDES.f01.subtitle },
-  { key: 'f02', route: '#/dict', emoji: '📕',
-    title: '2단계: 도서관 사전', sub: '꼭 알아야 할 낱말 7개' },
+  { key: 'f02', route: '#/dict', emoji: DICT_PAGE.emoji,
+    title: DICT_PAGE.title, sub: DICT_PAGE.subtitle },
   { key: 'f03', route: '#/guide/f03', emoji: GUIDES.f03.emoji,
     title: GUIDES.f03.title, sub: GUIDES.f03.subtitle },
-  { key: 'f04', route: '#/swipe', emoji: '🤫',
-    title: '4단계: 도서관 약속', sub: 'YES / NO 카드 게임' },
+  { key: 'f04', route: '#/swipe', emoji: SWIPE_PAGE.emoji,
+    title: SWIPE_PAGE.title, sub: SWIPE_PAGE.subtitle },
   { key: 'f05', route: '#/guide/f05', emoji: GUIDES.f05.emoji,
     title: GUIDES.f05.title, sub: GUIDES.f05.subtitle }
 ];
@@ -224,6 +226,9 @@ function renderNotices() {
 
 let guideKey = null;
 let guideIdx = 0;
+/* 문제를 맞힌 카드들을 기억해요. ('f01:0' 같은 형태)
+   문제 카드는 정답을 맞혀야 '다음'으로 넘어갈 수 있습니다. */
+const guideSolved = new Set();
 
 function renderGuide(key) {
   if (!GUIDES[key]) { go('#/home'); return; }
@@ -243,19 +248,24 @@ function paintGuide() {
     `<span class="dot ${i === guideIdx ? 'on' : ''} ${i < guideIdx ? 'past' : ''}"></span>`
   ).join('');
 
+  const alreadySolved = guideSolved.has(`${guideKey}:${guideIdx}`);
+
   $('#guide-body').innerHTML = `
     <article class="card step-card">
       <div class="step-icon">${step.icon}</div>
       <h2 class="step-heading">${esc(step.heading)}</h2>
       <p class="step-body">${esc(step.body)}</p>
       ${step.custom ? renderCustom(step.custom) : ''}
-      ${step.quiz ? renderStepQuiz(step.quiz) : ''}
+      ${step.quiz ? renderStepQuiz(step.quiz, alreadySolved) : ''}
     </article>
     <div id="step-feedback"></div>`;
 
   $('#guide-prev').disabled = guideIdx === 0;
   $('#guide-next').textContent = last ? '다 배웠어요! ✓' : '다음';
   $('#guide-next').classList.toggle('btn-done', last);
+
+  // 문제 카드는 정답을 맞혀야 '다음'이 눌립니다
+  $('#guide-next').disabled = step.quiz && !guideSolved.has(`${guideKey}:${guideIdx}`);
 }
 
 $('#guide-prev').addEventListener('click', () => {
@@ -288,13 +298,15 @@ $('#guide-tts').addEventListener('click', () => {
 
 /* ---------- 가이드 안의 문제 카드 ---------- */
 /* data.js 의 step 에 quiz 를 넣으면 어느 가이드에서든 문제를 낼 수 있어요. */
-function renderStepQuiz(q) {
+function renderStepQuiz(q, solved) {
   return `<div class="mc step-quiz">
     ${q.choices.map((c, i) => `
-      <button class="mc-btn" data-gpick="${i}">
+      <button class="mc-btn ${solved && i === q.answer ? 'is-correct' : ''}"
+              data-gpick="${i}" ${solved ? 'disabled' : ''}>
         <span class="mc-num">${i + 1}</span>${esc(c)}
       </button>`).join('')}
-  </div>`;
+  </div>
+  ${solved ? '' : '<p class="quiz-lock" id="quiz-lock">정답을 맞혀야 다음으로 넘어갈 수 있어요 🔒</p>'}`;
 }
 
 $('#guide-body').addEventListener('click', e => {
@@ -307,24 +319,47 @@ $('#guide-body').addEventListener('click', e => {
   const picked = Number(btn.dataset.gpick);
   const correct = picked === step.quiz.answer;
 
-  // 고른 버튼과 정답 버튼에 색칠 (퀴즈 화면과 같은 방식)
+  if (!correct) {
+    // ⚠️ 오답이라고 보기를 잠그면 안 돼요.
+    //    정답을 맞혀야 넘어갈 수 있으니, 잠그면 영영 못 나갑니다.
+    // ⚠️ 정답도 알려주지 않아요. 알려주면 그냥 눌러버려서 생각할 기회가 없어져요.
+    //    대신 힌트를 줍니다. (data.js 의 quiz.hint)
+    btn.classList.add('is-wrong');
+    $('#step-feedback').innerHTML = `
+      <div class="feedback bad">
+        <strong>🤔 다시 생각해볼까요?</strong>
+        <p>${esc(step.quiz.hint || '위 설명을 한 번 더 읽어보면 힌트가 숨어 있어요!')}</p>
+      </div>`;
+    return;
+  }
+
+  // 정답 — 이제 보기를 잠그고 '다음'을 열어줍니다
+  guideSolved.add(`${guideKey}:${guideIdx}`);
   document.querySelectorAll('[data-gpick]').forEach(b => {
-    const v = Number(b.dataset.gpick);
     b.disabled = true;
-    if (v === step.quiz.answer) b.classList.add('is-correct');
-    else if (v === picked) b.classList.add('is-wrong');
+    if (Number(b.dataset.gpick) === step.quiz.answer) b.classList.add('is-correct');
   });
+  $('#guide-next').disabled = false;
+  $('#quiz-lock')?.remove();     // '맞혀야 넘어갈 수 있어요' 안내는 이제 필요 없어요
 
   $('#step-feedback').innerHTML = `
-    <div class="feedback ${correct ? 'good' : 'bad'}">
-      <strong>${correct ? '⭕ 정답!' : '❌ 아쉬워요'}</strong>
+    <div class="feedback good">
+      <strong>⭕ 정답!</strong>
       <p>${esc(step.quiz.explain)}</p>
       ${step.quiz.showAfter ? renderCustom(step.quiz.showAfter) : ''}
     </div>`;
+  $('#step-feedback').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 });
 
 /* ---------- 가이드 안에 들어가는 특별한 그림들 ---------- */
 function renderCustom(type) {
+  // 대출·반납 순서 (data.js 의 FLOWS)
+  if (FLOWS[type]) {
+    return `<ol class="flow">
+      ${FLOWS[type].map(s => `<li>${esc(s)}</li>`).join('')}
+    </ol>`;
+  }
+
   if (type === 'hours') {
     return `<div class="hours">` + HOURS.map(h => `
       <div class="hour-row ${h.ok ? '' : 'closed'}">
@@ -376,72 +411,110 @@ function renderCustom(type) {
   return '';
 }
 
-/* ══════════ 5) 도서관 사전 (F-02) ══════════ */
+/* ══════════ 5) 도서관 용어 (F-02) ══════════ */
 
-let dictIdx = 0;
-let dictFlipped = false;
-const dictSeen = new Set();
+/* 짝 맞추기 게임 — 설명을 보여주고 알맞은 낱말을 찾게 합니다.
+     matchQueue : 아직 못 맞춘 설명들 (섞은 순서)
+     matchPool  : 아래에 보기로 깔리는 낱말들 (맞히면 하나씩 사라짐)      */
+let matchQueue = [];
+let matchPool = [];
+let matchLocked = false;   // 정답을 맞힌 뒤 또 누르는 것 방지
 
 function renderDict() {
   showScreen('screen-dict');
-  paintDict();
+  $('#dict-title').textContent = DICT_PAGE.short;
+  startMatch();
 }
 
-function paintDict() {
-  const d = DICTIONARY[dictIdx];
-  const last = dictIdx === DICTIONARY.length - 1;
-
-  $('#dict-dots').innerHTML = DICTIONARY.map((_, i) =>
-    `<span class="dot ${i === dictIdx ? 'on' : ''} ${dictSeen.has(i) ? 'past' : ''}"></span>`
-  ).join('');
-
-  // 카드 뒤집기는 CSS 의 rotateY 로 처리해요. (flip 클래스가 붙으면 뒤집힘)
-  $('#dict-stage').innerHTML = `
-    <div class="flip ${dictFlipped ? 'flipped' : ''}" id="flip-card">
-      <div class="flip-inner">
-        <div class="flip-face flip-front">
-          <span class="flip-emoji">${d.emoji}</span>
-          <h2 class="flip-word">${esc(d.word)}</h2>
-          <span class="flip-hint">눌러서 뜻 보기 👆</span>
-        </div>
-        <div class="flip-face flip-back">
-          <h3 class="flip-back-word">${esc(d.word)}</h3>
-          <p class="flip-meaning">${d.meaning}</p>
-          ${d.tip ? `<p class="flip-tip">💡 ${esc(d.tip)}</p>` : ''}
-        </div>
-      </div>
-    </div>`;
-
-  $('#dict-prev').disabled = dictIdx === 0;
-  $('#dict-next').textContent = last ? '다 배웠어요! ✓' : '다음';
-  $('#dict-next').classList.toggle('btn-done', last);
+function startMatch() {
+  matchQueue = shuffle(DICTIONARY);
+  matchPool = shuffle(DICTIONARY);
+  matchLocked = false;
+  paintMatch();
 }
 
-$('#dict-stage').addEventListener('click', () => {
-  dictFlipped = !dictFlipped;
-  if (dictFlipped) dictSeen.add(dictIdx);        // 뒤집어 본 카드 기억
-  $('#flip-card').classList.toggle('flipped', dictFlipped);
-  $('#dict-dots').children[dictIdx]?.classList.add('past');
-});
+function paintMatch() {
+  if (matchQueue.length === 0) { finishMatch(); return; }
 
-$('#dict-prev').addEventListener('click', () => {
-  if (dictIdx > 0) { dictIdx--; dictFlipped = false; paintDict(); }
-});
+  const cur = matchQueue[0];
+  const done = DICTIONARY.length - matchQueue.length;
 
-$('#dict-next').addEventListener('click', () => {
-  if (dictIdx < DICTIONARY.length - 1) {
-    dictIdx++; dictFlipped = false; paintDict();
-  } else {
-    const wasNew = markDone('f02');
-    dictIdx = 0; dictFlipped = false;
-    go('#/home');
-    toast(wasNew ? `도서관 사전 완료! 진행률 ${progressPct()}% 🎉` : '다시 복습했어요! 👍');
+  $('#dict-body').innerHTML = `
+    <div class="card match-card">
+      <p class="match-progress">
+        <span>맞힌 낱말</span>
+        <b>${done} / ${DICTIONARY.length}</b>
+      </p>
+      <div class="bar"><div class="bar-fill" style="width:${done / DICTIONARY.length * 100}%"></div></div>
+      <p class="match-meaning">${cur.meaning}</p>
+    </div>
+    <p class="match-ask">👇 이건 무슨 낱말일까요?</p>
+    <div class="chips">
+      ${matchPool.map(d => `
+        <button class="chip" data-word="${esc(d.word)}">
+          <span class="chip-emoji">${d.emoji}</span>${esc(d.word)}
+        </button>`).join('')}
+    </div>
+    <div id="dict-feedback"></div>`;
+}
+
+$('#dict-body').addEventListener('click', e => {
+  const btn = e.target.closest('[data-word]');
+  if (!btn || matchLocked) return;
+
+  const cur = matchQueue[0];
+  if (btn.dataset.word !== cur.word) {
+    // 틀렸으면 잠깐 흔들고 다시 고르게 해요 (못 고르게 막지 않아요)
+    btn.classList.add('chip-wrong');
+    setTimeout(() => btn.classList.remove('chip-wrong'), 600);
+    toast('아니에요. 설명을 한 번 더 읽어볼까요? 🤔');
+    return;
   }
+
+  matchLocked = true;
+  btn.classList.add('chip-right');
+
+  $('#dict-feedback').innerHTML = `
+    <div class="feedback good">
+      <strong>⭕ 정답! ${cur.emoji} ${esc(cur.word)}</strong>
+      <p>${cur.meaning}</p>
+      ${cur.tip ? `<p class="match-tip">💡 ${esc(cur.tip)}</p>` : ''}
+      <button class="btn btn-primary btn-lg" id="match-next">
+        ${matchQueue.length === 1 ? '다 맞혔어요! ✓' : '다음 낱말 →'}
+      </button>
+    </div>`;
+  $('#dict-feedback').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  $('#match-next').addEventListener('click', () => {
+    // 맞힌 낱말은 문제와 보기 양쪽에서 빼요
+    matchQueue.shift();
+    matchPool = matchPool.filter(d => d.word !== cur.word);
+    matchLocked = false;
+    paintMatch();
+  });
 });
+
+function finishMatch() {
+  const wasNew = markDone('f02');
+  $('#dict-body').innerHTML = `
+    <div class="verdict good">
+      <span class="verdict-emoji">🏆</span>
+      <h2>${esc(DICT_PAGE.short)} 끝!</h2>
+      <p class="verdict-answer">${DICTIONARY.length}개 낱말을 모두 찾았어요.</p>
+      <p class="verdict-explain">이제 도서관에서 이 말들이 나와도 무슨 뜻인지 알 수 있어요!</p>
+      <button class="btn btn-primary btn-lg" id="match-home">홈으로</button>
+      <button class="btn" id="match-again">한 번 더 하기</button>
+    </div>`;
+  $('#match-home').addEventListener('click', () => {
+    go('#/home');
+    toast(wasNew ? `${DICT_PAGE.short} 완료! 진행률 ${progressPct()}% 🎉` : '다시 복습했어요! 👍');
+  });
+  $('#match-again').addEventListener('click', startMatch);
+}
 
 $('#dict-tts').addEventListener('click', () => {
-  const d = DICTIONARY[dictIdx];
-  speak(`${d.word}. ${d.meaning.replace(/<[^>]+>/g, '')}`);
+  const cur = matchQueue[0];
+  if (cur) speak(cur.meaning.replace(/<[^>]+>/g, ''));
 });
 
 /* ══════════ 6) YES / NO 게임 (F-04) ══════════
@@ -456,6 +529,7 @@ let swipeLocked = false;    // 판정 중에 또 누르는 것 방지
 
 function startSwipe() {
   showScreen('screen-swipe');
+  $('#swipe-title').textContent = SWIPE_PAGE.short;
   deck = shuffle(SWIPE_CARDS);
   swipeIdx = 0;
   swipeRight = 0;
@@ -562,7 +636,7 @@ function finishSwipe() {
   $('#swipe-stage').innerHTML = `
     <div class="verdict good">
       <span class="verdict-emoji">🏆</span>
-      <h2>도서관 약속 끝!</h2>
+      <h2>${esc(SWIPE_PAGE.short)} 끝!</h2>
       <p class="verdict-answer">${deck.length}개 중 <b>${swipeRight}개</b> 맞혔어요.</p>
       <p class="verdict-explain">${
         swipeRight === deck.length ? '완벽해요! 약속을 아주 잘 알고 있네요 👏'
@@ -572,7 +646,7 @@ function finishSwipe() {
     </div>`;
   $('#swipe-home').addEventListener('click', () => {
     go('#/home');
-    toast(wasNew ? `도서관 약속 완료! 진행률 ${progressPct()}% 🎉` : '다시 복습했어요! 👍');
+    toast(wasNew ? `${SWIPE_PAGE.short} 완료! 진행률 ${progressPct()}% 🎉` : '다시 복습했어요! 👍');
   });
   $('#swipe-again').addEventListener('click', startSwipe);
 }
@@ -656,10 +730,17 @@ $('#quiz-body').addEventListener('click', e => {
     else if (v === picked) b.classList.add('is-wrong');
   });
 
+  // 틀렸을 때 정답이 무엇인지 글로도 알려줘요.
+  // (색깔 표시만으로는 저학년이 못 알아볼 수 있어요)
+  const answerLabel = q.type === 'OX'
+    ? (q.answer ? '⭕ 맞아요' : '❌ 아니에요')
+    : `${q.answer + 1}번 · ${esc(q.choices[q.answer])}`;
+
   const last = qIdx === qList.length - 1;
   $('#quiz-feedback').innerHTML = `
     <div class="feedback ${correct ? 'good' : 'bad'}">
       <strong>${correct ? '⭕ 정답!' : '❌ 아쉬워요'}</strong>
+      ${correct ? '' : `<p class="answer-line">정답은 <b>${answerLabel}</b></p>`}
       <p>${esc(q.explain)}</p>
       <button class="btn btn-primary btn-lg" id="quiz-next">
         ${last ? '결과 보기' : '다음 문제 →'}
