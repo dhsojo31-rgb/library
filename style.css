@@ -241,40 +241,6 @@ input:focus, select:focus { outline: none; border-color: var(--purple); }
 .quiz-cta-text small  { font-size: 11.5px; opacity: .95; line-height: 1.45; }
 .quiz-cta-arrow { font-size: 26px; opacity: .8; }
 
-/* ══════════ 홈: 빌린 책 D-Day ══════════ */
-.loan {
-  display: flex; align-items: center; gap: 10px;
-  background: #fff; border-radius: var(--r-s);
-  border-left: 5px solid var(--gray);
-  padding: 12px 10px 12px 13px; margin-bottom: 8px;
-  box-shadow: var(--shadow);
-}
-.loan-info { flex: 1; min-width: 0; }
-.loan-info strong {
-  display: block; font-size: 14.5px;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.loan-info small { font-size: 11.5px; color: var(--ink-2); }
-.dday { font-size: 13px; font-weight: 900; padding: 5px 10px; border-radius: 999px; }
-
-.loan.ok    { border-left-color: var(--green); }
-.loan.ok    .dday { background: var(--green-lt); color: #15803D; }
-.loan.soon  { border-left-color: var(--yellow); }
-.loan.soon  .dday { background: #FEF3C7; color: #B45309; }
-.loan.today { border-left-color: #F97316; }
-.loan.today .dday { background: #FFEDD5; color: #C2410C; }
-.loan.late  { border-left-color: var(--red); background: #FFF5F5; }
-.loan.late  .dday { background: var(--red); color: #fff; }
-
-/* 공지 */
-.notice {
-  display: flex; gap: 11px; align-items: flex-start;
-  background: #fff; border-radius: var(--r-s);
-  padding: 13px 14px; margin-bottom: 8px;
-  font-size: 13.5px; box-shadow: var(--shadow);
-}
-.notice-emoji { font-size: 18px; }
-
 .foot { text-align: center; margin-top: 30px; opacity: .55; }
 
 /* ══════════ 진행 점(dots) ══════════ */
@@ -729,6 +695,35 @@ input:focus, select:focus { outline: none; border-color: var(--purple); }
   .step-body  { font-size: 16.5px; }
   .quiz-q     { font-size: 21px; }
   .scroll     { padding: 20px 20px 36px; }
+}
+
+/* ══════════ PC 큰 화면 ══════════
+   이 앱은 폰에 맞춰 만들어졌어요. 큰 모니터에서 억지로 넓히면
+   글줄이 너무 길어져서 오히려 읽기 나빠집니다.
+   그래서 폭은 그대로 두고, 앱을 카드처럼 띄워 놓습니다.
+   (선생님이 PC로 아이들에게 보여줄 때 쓰는 화면이에요)          */
+@media (min-width: 860px) {
+  body {
+    background: radial-gradient(120% 90% at 50% 0%, #2D285C 0%, #1E1B3A 70%);
+    min-height: 100dvh;
+    display: flex;                 /* 카드를 세로 가운데로 */
+    align-items: center;
+    padding: 28px 0;
+  }
+  .screen {
+    /* 화면보다 짧으면 내용만큼만, 길면 화면에 맞춰 스크롤 */
+    height: auto;
+    min-height: 0;
+    max-height: calc(100dvh - 56px);
+    margin: 0 auto;
+    border-radius: 26px;
+    overflow: hidden;              /* 둥근 모서리 밖으로 안 삐져나오게 */
+    box-shadow: 0 24px 64px rgba(0, 0, 0, .38);
+  }
+  /* 내용만큼만 높이를 차지하도록 — 안 그러면 카드 안에 흰 여백이 생겨요 */
+  .screen > .scroll { flex: 0 1 auto; }
+  /* 모서리를 둥글게 깎았으니 상단바 배경도 같이 깎여요 */
+  .topbar { border-radius: 0; }
 }
 
 /* 애니메이션을 불편해하는 사용자 배려 (접근성) */

@@ -17,8 +17,7 @@ function emptyState() {
     progress: { f01: false, f02: false, f03: false, f04: false, f05: false },
     quiz: { passed: false, bestScore: 0, attemptCount: 0 },
     badges: [],
-    coupons: [],
-    loans: []
+    coupons: []
   };
 }
 
@@ -132,26 +131,6 @@ function useCoupon(id) {
   c.usedAt = todayISO();
   save();
   return true;
-}
-
-/* ---------- 빌린 책 ---------- */
-function addLoan(title, dueDate) {
-  state.loans.push({ id: 'L' + Date.now(), title, dueDate });
-  state.loans.sort((a, b) => a.dueDate.localeCompare(b.dueDate)); // 급한 순
-  save();
-}
-function removeLoan(id) {
-  state.loans = state.loans.filter(l => l.id !== id);
-  save();
-}
-
-/* ---------- D-Day 계산 ---------- */
-/* 반납일까지 며칠 남았는지. 0이면 오늘, 음수면 연체 */
-function daysLeft(dueDate) {
-  const due = new Date(dueDate + 'T00:00:00');
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  return Math.round((due - today) / 86400000);
 }
 
 /* 날짜를 'YYYY-MM-DD' 로 바꿔요. 넣지 않으면 오늘 날짜.

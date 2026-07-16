@@ -85,17 +85,6 @@
       <span class="quiz-cta-arrow">›</span>
     </button>
 
-    <!-- 반납 D-Day -->
-    <h2 class="section-title">
-      내가 빌린 책
-      <button class="link-btn" id="btn-add-loan">+ 추가</button>
-    </h2>
-    <div id="loan-list"></div>
-
-    <!-- 공지 -->
-    <h2 class="section-title">도서관 소식</h2>
-    <div id="notice-list"></div>
-
     <footer class="foot">
       <button class="link-btn" id="btn-admin">🔐 사서 선생님용</button>
     </footer>
@@ -172,23 +161,6 @@
   </header>
   <main class="scroll" id="admin-body"></main>
 </section>
-
-<!-- ══════════════ 책 추가 (모달) ══════════════ -->
-<div class="modal" id="modal-loan" hidden>
-  <form class="modal-box" id="loan-form">
-    <h2>빌린 책 추가</h2>
-    <label>책 제목
-      <input name="title" required maxlength="40" placeholder="마당을 나온 암탉" autocomplete="off">
-    </label>
-    <label>반납일
-      <input name="dueDate" type="date" required>
-    </label>
-    <div class="modal-actions">
-      <button class="btn" type="button" data-close>취소</button>
-      <button class="btn btn-primary" type="submit">추가</button>
-    </div>
-  </form>
-</div>
 
 <div class="toast" id="toast" hidden></div>
 

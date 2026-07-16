@@ -168,9 +168,6 @@ function renderHome() {
   } else {
     sub.textContent = `5문제 중 ${QUIZ_RULE.passScore}문제를 맞히면 수료 배지!`;
   }
-
-  renderLoans();
-  renderNotices();
 }
 
 /* 메뉴 카드 클릭 */
@@ -186,47 +183,6 @@ $('#btn-quiz-cta').addEventListener('click', () => {
 
 $('#btn-admin').addEventListener('click', () => go('#/admin'));
 
-/* ---------- 빌린 책 D-Day ---------- */
-function renderLoans() {
-  const box = $('#loan-list');
-  if (state.loans.length === 0) {
-    box.innerHTML = `<p class="empty">아직 빌린 책이 없어요.
-      책을 빌리면 <b>+ 추가</b>를 눌러서 반납일을 기억해 두세요!</p>`;
-    return;
-  }
-  box.innerHTML = state.loans.map(l => {
-    const d = daysLeft(l.dueDate);
-    let label, tone;
-    if (d < 0)       { label = `${-d}일 연체`;  tone = 'late'; }
-    else if (d === 0){ label = '오늘까지!';     tone = 'today'; }
-    else if (d <= 2) { label = `D-${d}`;        tone = 'soon'; }
-    else             { label = `D-${d}`;        tone = 'ok'; }
-    return `
-      <div class="loan ${tone}">
-        <div class="loan-info">
-          <strong>${esc(l.title)}</strong>
-          <small>${esc(l.dueDate)}까지</small>
-        </div>
-        <span class="dday">${label}</span>
-        <button class="icon-btn small" data-del="${l.id}" aria-label="삭제">🗑️</button>
-      </div>`;
-  }).join('');
-}
-
-$('#loan-list').addEventListener('click', e => {
-  const btn = e.target.closest('[data-del]');
-  if (!btn) return;
-  removeLoan(btn.dataset.del);
-  renderLoans();
-});
-
-function renderNotices() {
-  $('#notice-list').innerHTML = NOTICES.map(n => `
-    <div class="notice">
-      <span class="notice-emoji">${n.emoji}</span>
-      <p>${esc(n.text)}</p>
-    </div>`).join('');
-}
 
 /* ══════════ 4) 가이드 뷰어 ⭐ F-01 / F-03 / F-05 공용 ══════════
    이 화면 하나가 가이드 3개를 전부 담당합니다.
@@ -979,25 +935,6 @@ document.addEventListener('click', e => {
 });
 
 /* ---------- 빌린 책 추가 ---------- */
-$('#btn-add-loan').addEventListener('click', () => {
-  const f = $('#loan-form');
-  f.reset();
-  // 반납일 기본값 — 대출 기간은 data.js 의 LOAN_RULE 에서 바꾸세요
-  const d = new Date();
-  d.setDate(d.getDate() + LOAN_RULE.days);
-  f.dueDate.value = todayISO(d);
-  $('#modal-loan').hidden = false;
-});
-
-$('#loan-form').addEventListener('submit', e => {
-  e.preventDefault();
-  const f = e.target;
-  addLoan(f.title.value.trim(), f.dueDate.value);
-  $('#modal-loan').hidden = true;
-  renderLoans();
-  toast('책을 추가했어요! 반납일을 잊지 마세요 📅');
-});
-
 /* ---------- 온보딩 ---------- */
 /* 학년·반 선택지는 data.js 의 SCHOOL_SIZE 로 만들어요 */
 function fillSelect(el, max, suffix, selected) {
