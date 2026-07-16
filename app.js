@@ -249,7 +249,9 @@ function paintGuide() {
       <h2 class="step-heading">${esc(step.heading)}</h2>
       <p class="step-body">${esc(step.body)}</p>
       ${step.custom ? renderCustom(step.custom) : ''}
-    </article>`;
+      ${step.quiz ? renderStepQuiz(step.quiz) : ''}
+    </article>
+    <div id="step-feedback"></div>`;
 
   $('#guide-prev').disabled = guideIdx === 0;
   $('#guide-next').textContent = last ? '다 배웠어요! ✓' : '다음';
@@ -276,19 +278,53 @@ $('#guide-next').addEventListener('click', () => {
 
 $('#guide-tts').addEventListener('click', () => {
   const step = GUIDES[guideKey].steps[guideIdx];
-  speak(step.heading + '. ' + step.body);
+  let text = step.heading + '. ' + step.body;
+  // 문제 카드면 보기도 읽어줘요 (글을 읽기 힘든 저학년 배려)
+  if (step.quiz) {
+    text += ' ' + step.quiz.choices.map((c, i) => `${i + 1}번, ${c}.`).join(' ');
+  }
+  speak(text);
+});
+
+/* ---------- 가이드 안의 문제 카드 ---------- */
+/* data.js 의 step 에 quiz 를 넣으면 어느 가이드에서든 문제를 낼 수 있어요. */
+function renderStepQuiz(q) {
+  return `<div class="mc step-quiz">
+    ${q.choices.map((c, i) => `
+      <button class="mc-btn" data-gpick="${i}">
+        <span class="mc-num">${i + 1}</span>${esc(c)}
+      </button>`).join('')}
+  </div>`;
+}
+
+$('#guide-body').addEventListener('click', e => {
+  const btn = e.target.closest('[data-gpick]');
+  if (!btn) return;
+
+  const step = GUIDES[guideKey].steps[guideIdx];
+  if (!step.quiz) return;
+
+  const picked = Number(btn.dataset.gpick);
+  const correct = picked === step.quiz.answer;
+
+  // 고른 버튼과 정답 버튼에 색칠 (퀴즈 화면과 같은 방식)
+  document.querySelectorAll('[data-gpick]').forEach(b => {
+    const v = Number(b.dataset.gpick);
+    b.disabled = true;
+    if (v === step.quiz.answer) b.classList.add('is-correct');
+    else if (v === picked) b.classList.add('is-wrong');
+  });
+
+  $('#step-feedback').innerHTML = `
+    <div class="feedback ${correct ? 'good' : 'bad'}">
+      <strong>${correct ? '⭕ 정답!' : '❌ 아쉬워요'}</strong>
+      <p>${esc(step.quiz.explain)}</p>
+      ${step.quiz.showAfter ? renderCustom(step.quiz.showAfter) : ''}
+    </div>`;
 });
 
 /* ---------- 가이드 안에 들어가는 특별한 그림들 ---------- */
 function renderCustom(type) {
-  if (type === 'map') {
-    return `<div class="map-grid">` + LIBRARY_MAP.map(m => `
-      <div class="map-cell tone-${m.tone}">
-        <span class="map-emoji">${m.emoji}</span>
-        <span class="map-name">${esc(m.name)}</span>
-      </div>`).join('') + `</div>`;
-  }
-
   if (type === 'hours') {
     return `<div class="hours">` + HOURS.map(h => `
       <div class="hour-row ${h.ok ? '' : 'closed'}">
