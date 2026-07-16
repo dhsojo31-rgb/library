@@ -141,7 +141,7 @@ function kdcLabel(code) {
   return `${k.code} ${k.name}`;
 }
 
-function shuffleCodes(list) {
+function shuffleList(list) {
   const a = list.slice();
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -151,8 +151,11 @@ function shuffleCodes(list) {
 }
 
 function kdcQuizSteps() {
-  return KDC_QUIZ.map(q => {
-    const codes = shuffleCodes([q.code, ...q.others]);   // 보기 순서 섞기
+  // ⚠️ 문제 순서를 섞어요.
+  //    000 → 900 순서대로 나오면 아이들이 생각하지 않고
+  //    번호만 순서대로 눌러도 다 맞아버립니다.
+  return shuffleList(KDC_QUIZ).map(q => {
+    const codes = shuffleList([q.code, ...q.others]);   // 보기 순서도 섞기
     const k = KDC.find(x => x.code === q.code);
     return {
       icon: '🔎',
