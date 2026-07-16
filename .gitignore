@@ -1,0 +1,12 @@
+# Claude Code 로컬 설정 (이 PC에서만 쓰는 도구 권한 설정)
+.claude/
+
+# 임시 검증용 파일 (개발 중에만 잠깐 만들었다 지우는 것들)
+_verify.html
+_measure.html
+_datecheck.html
+
+# OS가 자동으로 만드는 파일
+Thumbs.db
+desktop.ini
+.DS_Store
