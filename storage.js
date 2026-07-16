@@ -6,12 +6,14 @@
    단, 글자(문자열)만 넣을 수 있어서 JSON 으로 바꿔서 넣습니다.
    ============================================================ */
 
-const SAVE_KEY = 'library_explorer_v1';
+/* 저장 형식이 바뀌면 뒤의 숫자를 올려요.
+   v2: 학번을 없애고 반(classNo)을 받도록 변경 — 옛 저장본은 무시하고 다시 등록받습니다. */
+const SAVE_KEY = 'library_explorer_v2';
 
 /* 처음 시작할 때의 빈 상태 */
 function emptyState() {
   return {
-    student: null,                 // { name, grade, studentId }
+    student: null,                 // { name, grade, classNo }
     progress: { f01: false, f02: false, f03: false, f04: false, f05: false },
     quiz: { passed: false, bestScore: 0, attemptCount: 0 },
     badges: [],
@@ -47,8 +49,8 @@ function save() {
 }
 
 /* ---------- 학생 등록 ---------- */
-function registerStudent(name, grade, studentId) {
-  state.student = { name, grade: Number(grade), studentId };
+function registerStudent(name, grade, classNo) {
+  state.student = { name, grade: Number(grade), classNo: Number(classNo) };
   save();
 }
 
@@ -109,7 +111,8 @@ function issueCoupon(type) {
   return coupon;
 }
 
-/* 쿠폰 번호 만들기 — 학번 뒤 3자리 + 무작위 4글자
+/* 쿠폰 번호 만들기 — 학년·반 + 무작위 4글자 (예: 3-1반 → "31" + "KT65")
+   학년·반을 앞에 붙여두면 선생님이 어느 반 학생 쿠폰인지 바로 알 수 있어요.
    ⚠️ 바코드(CODE39)로 그릴 거라서 숫자·영대문자만 씁니다. */
 function makeCouponCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 헷갈리는 O,0,I,1 은 뺐어요
@@ -117,8 +120,9 @@ function makeCouponCode() {
   for (let i = 0; i < 4; i++) {
     rnd += chars[Math.floor(Math.random() * chars.length)];
   }
-  const tail = (state.student?.studentId || '000').slice(-3);
-  return tail + rnd;
+  const s = state.student;
+  const head = s ? `${s.grade}${s.classNo}` : '00';
+  return head + rnd;
 }
 
 /* ---------- 쿠폰 사용 처리 (사서 선생님용) ---------- */

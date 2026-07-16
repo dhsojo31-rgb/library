@@ -124,7 +124,7 @@ function renderHome() {
   showScreen('screen-home');
 
   const s = state.student;
-  $('#home-hello').textContent = `안녕하세요, ${s.grade}학년 ${s.name} 탐험대원!`;
+  $('#home-hello').textContent = `안녕하세요, ${s.grade}학년 ${s.classNo}반 ${s.name} 탐험대원!`;
 
   // 진행률
   const pct = progressPct();
@@ -816,7 +816,7 @@ function paintAdminPanel() {
     <div class="card">
       <div class="admin-row"><span>이름</span><b>${esc(s.name)}</b></div>
       <div class="admin-row"><span>학년</span><b>${s.grade}학년</b></div>
-      <div class="admin-row"><span>학번</span><b>${esc(s.studentId)}</b></div>
+      <div class="admin-row"><span>반</span><b>${s.classNo}반</b></div>
     </div>
 
     <h2 class="section-title">학습 진행 현황 · ${progressPct()}%</h2>
@@ -865,18 +865,6 @@ document.addEventListener('click', e => {
   else if (e.target.classList.contains('modal')) e.target.hidden = true;
 });
 
-/* ---------- 모바일 학생증 ---------- */
-$('#btn-card').addEventListener('click', () => {
-  const s = state.student;
-  $('#sc-school').textContent = SCHOOL.libraryName;
-  $('#sc-name').textContent = s.name;
-  $('#sc-meta').textContent = `${SCHOOL.name} ${s.grade}학년`;
-  $('#sc-id').textContent = s.studentId;
-  $('#modal-card').hidden = false;
-  // 모달이 열린 다음에 그려야 canvas 너비를 알 수 있어요
-  requestAnimationFrame(() => drawBarcode($('#sc-barcode'), s.studentId, 70));
-});
-
 /* ---------- 빌린 책 추가 ---------- */
 $('#btn-add-loan').addEventListener('click', () => {
   const f = $('#loan-form');
@@ -898,10 +886,24 @@ $('#loan-form').addEventListener('submit', e => {
 });
 
 /* ---------- 온보딩 ---------- */
+/* 학년·반 선택지는 data.js 의 SCHOOL_SIZE 로 만들어요 */
+function fillSelect(el, max, suffix, selected) {
+  el.innerHTML = '';
+  for (let i = 1; i <= max; i++) {
+    const o = document.createElement('option');
+    o.value = i;
+    o.textContent = i + suffix;
+    if (i === selected) o.selected = true;
+    el.appendChild(o);
+  }
+}
+fillSelect($('#sel-grade'), SCHOOL_SIZE.maxGrade, '학년', 3);
+fillSelect($('#sel-class'), SCHOOL_SIZE.maxClass, '반', 1);
+
 $('#onboard-form').addEventListener('submit', e => {
   e.preventDefault();
   const f = e.target;
-  registerStudent(f.name.value.trim(), f.grade.value, f.studentId.value.trim());
+  registerStudent(f.name.value.trim(), f.grade.value, f.classNo.value);
   location.hash = '#/home';
   route();
   toast(`환영해요, ${state.student.name} 탐험대원! 🎉`);
