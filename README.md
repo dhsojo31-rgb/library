@@ -36,8 +36,9 @@
 VS Code에서 **Live Server** 확장을 설치하고 `index.html` 우클릭 → *Open with Live Server*
 
 ### 배포
-GitHub 저장소 → **Settings → Pages → Branch: main → Save**
-몇 분 뒤 `https://dhsojo31-rgb.github.io/library/` 로 접속됩니다.
+**Vercel** 에 연결되어 있어, `main` 에 올리면 자동으로 배포됩니다.
+접속 주소: **https://library-yh75.vercel.app/**
+(모든 파일을 no-cache 로 서빙해서 카톡 등 인앱 브라우저에서도 항상 최신이 뜹니다)
 
 학생 안내:
 - **iPhone**: Safari로 접속 → 공유 → "홈 화면에 추가"
