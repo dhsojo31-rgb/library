@@ -962,11 +962,31 @@ $('#onboard-form').addEventListener('submit', e => {
 /* ---------- 앱 시작 ---------- */
 route();
 
-/* ---------- 오프라인 지원 (Service Worker) ---------- */
-/* file:// 로 열면 동작하지 않아요. Live Server 나 배포된 주소에서만 켜집니다. */
+/* ---------- 오프라인 지원 + 자동 업데이트 (Service Worker) ---------- */
+/* file:// 로 열면 동작하지 않아요. Live Server 나 배포된 주소에서만 켜집니다.
+
+   ⭐ 자동 업데이트:
+      선생님이 새 버전을 올리면, 학생이 다음에 앱을 열 때
+      새 버전을 몰래 내려받아 설치한 뒤 화면을 한 번 새로고침해서
+      항상 최신 내용이 보이도록 합니다.
+      (예전에는 옛날 캐시가 계속 남아서 "안 바뀌는" 문제가 있었어요) */
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(err =>
-      console.warn('오프라인 기능을 켜지 못했습니다.', err));
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      // 30분마다 새 버전이 있는지 확인
+      setInterval(() => reg.update().catch(() => {}), 30 * 60 * 1000);
+
+      reg.addEventListener('updatefound', () => {
+        const fresh = reg.installing;
+        if (!fresh) return;
+        fresh.addEventListener('statechange', () => {
+          // 새 버전이 설치됐고, 이미 예전 버전이 돌아가던 중이면 = 업데이트
+          if (fresh.state === 'installed' && navigator.serviceWorker.controller) {
+            location.reload();   // 딱 한 번 새로고침해서 최신으로
+          }
+          // (예전 버전이 없던 첫 방문이면 새로고침하지 않아요 — controller 가 없음)
+        });
+      });
+    }).catch(err => console.warn('오프라인 기능을 켜지 못했습니다.', err));
   });
 }
