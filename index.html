@@ -1,4 +1,23 @@
 <meta charset="utf-8">
+
+<!-- 카카오톡 안에서 열면 앱이 제대로 안 돌아가서, 자동으로 크롬(기본 브라우저)으로 넘깁니다.
+     학생이 "다른 브라우저로 열기" 를 누를 필요가 없어요. -->
+<script>
+(function () {
+  var ua = navigator.userAgent.toLowerCase();
+  if (ua.indexOf('kakaotalk') === -1) return;   // 카톡 인앱 브라우저에서만 동작
+  var url = location.href;
+  if (ua.indexOf('android') > -1) {
+    // 안드로이드: 크롬으로 강제 전환
+    location.href = 'intent://' + url.replace(/^https?:\/\//i, '') +
+      '#Intent;scheme=https;package=com.android.chrome;end';
+  } else {
+    // 아이폰 등: 카톡의 외부 브라우저 열기 기능 사용
+    location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(url);
+  }
+})();
+</script>
+
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#5B4CDB">
 
